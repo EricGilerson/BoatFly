@@ -32,7 +32,7 @@ public class BoatFlyClient implements ClientModInitializer {
 	private static Vec3d boat;
 	private static final MinecraftClient client = MinecraftClient.getInstance();
 	private static final KeyBinding.Category BOATFLY_CATEGORY =
-			KeyBinding.Category.create(Identifier.of("assets/boatfly", "main"));
+			KeyBinding.Category.create(Identifier.of("boatfly", "main"));
 
 
 	// The KeyBinding declaration and registration are commonly executed here statically
