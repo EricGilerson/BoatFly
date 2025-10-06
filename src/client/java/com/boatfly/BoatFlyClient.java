@@ -50,7 +50,7 @@ public class BoatFlyClient implements ClientModInitializer {
 					.then(argument("value", FloatArgumentType.floatArg())
 							.executes(context -> {
 								final double value = Math.round((FloatArgumentType.getFloat(context, "value")) * 1000.0) / 1000.0;
-								changeSpeed(MinecraftClient.getInstance(), (float) value);
+								changeSpeed(MinecraftClient.getInstance(), (float) value, false);
 								return (int) value;
 							})));
 		});
@@ -66,17 +66,19 @@ public class BoatFlyClient implements ClientModInitializer {
 				BoatSpeed = 1;
 				if (BoatFlyOn) {
 					client.player.sendMessage(Text.of("Boat Fly is now On and Boat Speed is Set to 8 blocks/s"), true);
+					changeSpeed(client, 8, true);
 				} else {
 					client.player.sendMessage(Text.of("Boat Fly is now Off"), true);
 				}
 			}
 			if (BoatSpeedDec.wasPressed()) {
-				changeSpeed(client, boatVelocity + -1);
-
+				if(boatVelocity != 0) {
+					changeSpeed(client, boatVelocity + -1, false);
+				}
 
 			}
 			if (BoatSpeedInc.wasPressed()) {
-				changeSpeed(client, boatVelocity + 1);
+				changeSpeed(client, boatVelocity + 1, false);
 			}
 			if (client.options.jumpKey.isPressed()) {
 				if (BoatFlyClient.BoatFlyOn) {
@@ -107,8 +109,8 @@ public class BoatFlyClient implements ClientModInitializer {
 
 
 	}
-	public void changeSpeed(MinecraftClient client, double speed){
-		BoatFlyOn = false;
+	public void changeSpeed(MinecraftClient client, double speed, boolean fly){
+
 		BoatSpeed = multiplier(speed);
 		double scale = Math.pow(10, 5);
 		boatVelocity = Math.round(speed * scale) / scale;
@@ -116,7 +118,10 @@ public class BoatFlyClient implements ClientModInitializer {
 		System.out.println(BoatSpeedRound);
 		String StringBoatSpeed = Double.toString(speed);
 		assert client.player != null;
-		client.player.sendMessage(Text.of("Your Boat Speed is now " + StringBoatSpeed + " blocks/s"), true);
+		if(!fly) {
+			//BoatFlyOn = false;
+			client.player.sendMessage(Text.of("Your Boat Speed is now " + StringBoatSpeed + " blocks/s"), true);
+		}
 	}
 	/*private void updatePlayerSpeed() {
 		if(client.player != null) {
