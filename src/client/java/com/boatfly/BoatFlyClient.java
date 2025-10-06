@@ -11,6 +11,7 @@ import net.minecraft.entity.Entity;
 import java.lang.Math;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
 
@@ -30,16 +31,21 @@ public class BoatFlyClient implements ClientModInitializer {
 	private static double playerSpeed;
 	private static Vec3d boat;
 	private static final MinecraftClient client = MinecraftClient.getInstance();
+	private static final KeyBinding.Category BOATFLY_CATEGORY =
+			KeyBinding.Category.create(Identifier.of("assets/boatfly", "main"));
 
 
 	// The KeyBinding declaration and registration are commonly executed here statically
 
 	@Override
 	public void onInitializeClient() {
-		BoatFlight = KeyBindingHelper.registerKeyBinding(new KeyBinding("Boat Fly",  InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_B, "Boat Fly"));
 		BoatFlyOn = false;
-		BoatSpeedInc = KeyBindingHelper.registerKeyBinding(new KeyBinding("Increase Boat Speed",  InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_I, "Boat Fly"));
-		BoatSpeedDec = KeyBindingHelper.registerKeyBinding(new KeyBinding("Decrease Boat Speed",  InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_O, "Boat Fly"));
+		BoatFlight   = KeyBindingHelper.registerKeyBinding(
+				new KeyBinding("key.boatfly.toggle",  InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_B, BOATFLY_CATEGORY));
+		BoatSpeedInc = KeyBindingHelper.registerKeyBinding(
+				new KeyBinding("key.boatfly.speed_up", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_I, BOATFLY_CATEGORY));
+		BoatSpeedDec = KeyBindingHelper.registerKeyBinding(
+				new KeyBinding("key.boatfly.speed_down", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_O, BOATFLY_CATEGORY));
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			if (client.isWindowFocused()) { // Ensure the window is focused before rendering
 				onRenderTick(client);
