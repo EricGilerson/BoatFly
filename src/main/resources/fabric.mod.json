@@ -10,8 +10,8 @@
 	"contact": {
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/modid/icon.png",
-	"environment": "*",
+	"icon": "assets/boatfly/icon.png",
+	"environment": "client",
 	"entrypoints": {
 		"main": [
 			"com.boatfly.BoatFly"
