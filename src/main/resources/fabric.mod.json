@@ -3,7 +3,7 @@
 	"id": "boatfly",
 	"version": "${version}",
 	"name": "Boat Fly",
-	"description": "Allows you to Fly in a Boat and Change the speed of the boat",
+	"description": "Fly in a boat, change boat speed, with server-side configuration for admins",
 	"authors": [
 		"Eric Gilerson"
 	],
@@ -32,6 +32,5 @@
 		"fabric-api": "*"
 	},
 	"suggests": {
-		"another-mod": "*"
 	}
 }
