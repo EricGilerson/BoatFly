@@ -1,5 +1,7 @@
 package com.boatfly;
 
+import com.boatfly.config.ClientConfigState;
+import com.boatfly.network.BoatFlyConfigPayload;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import net.fabricmc.api.ClientModInitializer;
@@ -7,6 +9,8 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -44,10 +48,36 @@ public class BoatFlyClient implements ClientModInitializer {
 			dispatcher.register(ClientCommands.literal("boatspeed")
 					.then(ClientCommands.argument("value", FloatArgumentType.floatArg())
 							.executes(context -> {
-								final double value = Math.round((FloatArgumentType.getFloat(context, "value")) * 1000.0) / 1000.0;
+								if (!ClientConfigState.isCommandEnabled()) {
+									context.getSource().sendFeedback(Component.literal("The /boatspeed command is disabled on this server"));
+									return 0;
+								}
+								if (!ClientConfigState.isAllowPlayerSpeedChange()) {
+									context.getSource().sendFeedback(Component.literal("Speed changes are disabled on this server"));
+									return 0;
+								}
+								double value = Math.round((FloatArgumentType.getFloat(context, "value")) * 1000.0) / 1000.0;
+								value = ClientConfigState.clampSpeed(value);
 								changeSpeed(Minecraft.getInstance(), (float) value, false);
 								return (int) value;
 							})));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(BoatFlyConfigPayload.TYPE, (payload, context) -> {
+			context.client().execute(() -> {
+				ClientConfigState.applyFromPayload(payload);
+				if (!ClientConfigState.isFlightEnabled() && BoatFlyOn) {
+					BoatFlyOn = false;
+				}
+				changeSpeed(context.client(), ClientConfigState.getDefaultSpeed(), true);
+			});
+		});
+
+		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+			ClientConfigState.reset();
+			BoatFlyOn = false;
+			BoatSpeed = 1;
+			boatVelocity = 8;
 		});
 	}
 
@@ -55,6 +85,11 @@ public class BoatFlyClient implements ClientModInitializer {
 		if (client.player == null) return;
 
 		if (BoatFlight.consumeClick()) {
+			if (!ClientConfigState.isKeybindFlightToggle()) return;
+			if (!ClientConfigState.isFlightEnabled()) {
+				client.player.sendOverlayMessage(Component.literal("Boat Flight is disabled on this server"));
+				return;
+			}
 			BoatFlyOn = !BoatFlyOn;
 			BoatSpeed = 1;
 			if (BoatFlyOn) {
@@ -65,12 +100,18 @@ public class BoatFlyClient implements ClientModInitializer {
 			}
 		}
 		if (BoatSpeedDec.consumeClick()) {
+			if (!ClientConfigState.isKeybindSpeedDown()) return;
+			if (!ClientConfigState.isAllowPlayerSpeedChange()) return;
 			if (boatVelocity > 0) {
-				changeSpeed(client, Math.max(0, boatVelocity - 1), false);
+				double newSpeed = ClientConfigState.clampSpeed(boatVelocity - 1);
+				changeSpeed(client, newSpeed, false);
 			}
 		}
 		if (BoatSpeedInc.consumeClick()) {
-			changeSpeed(client, boatVelocity + 1, false);
+			if (!ClientConfigState.isKeybindSpeedUp()) return;
+			if (!ClientConfigState.isAllowPlayerSpeedChange()) return;
+			double newSpeed = ClientConfigState.clampSpeed(boatVelocity + 1);
+			changeSpeed(client, newSpeed, false);
 		}
 
 		Entity vehicle = client.player.getVehicle();
@@ -86,7 +127,8 @@ public class BoatFlyClient implements ClientModInitializer {
 			vehicle.setDeltaMovement(boat);
 		}
 	}
-	public void changeSpeed(Minecraft client, double speed, boolean fly){
+
+	public void changeSpeed(Minecraft client, double speed, boolean fly) {
 		BoatSpeed = multiplier(speed);
 		double scale = Math.pow(10, 5);
 		boatVelocity = Math.round(speed * scale) / scale;
@@ -96,7 +138,7 @@ public class BoatFlyClient implements ClientModInitializer {
 		}
 	}
 
-	private double multiplier(double velocity){
+	private double multiplier(double velocity) {
 		if (velocity <= 0) return 0;
 		double logInput = velocity - 8 + 11.9072;
 		if (logInput <= 0) return 1.0;

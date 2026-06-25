@@ -11,13 +11,16 @@
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/boatfly/icon.png",
-	"environment": "client",
+	"environment": "*",
 	"entrypoints": {
 		"main": [
 			"com.boatfly.BoatFly"
 		],
 		"client": [
 			"com.boatfly.BoatFlyClient"
+		],
+		"fabric-client-gametest": [
+			"com.boatfly.test.BoatFlyGameTest"
 		]
 	},
 	"mixins": [
