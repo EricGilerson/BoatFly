@@ -22,12 +22,30 @@ loom {
     splitEnvironmentSourceSets()
 
 	mods {
-		"modid" {
+		"boatfly" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}
 	}
 
+	runs {
+		client {
+			client()
+			setConfigName("Client")
+			source(sourceSets.client)
+		}
+		server {
+			server()
+			setConfigName("Server")
+			source(sourceSets.main)
+		}
+		clientGametest {
+			client()
+			setConfigName("Client Gametest")
+			source(sourceSets.client)
+			property("fabric.client.gametest", "")
+		}
+	}
 }
 
 dependencies {
